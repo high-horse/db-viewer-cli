@@ -54,16 +54,20 @@ func (c *Connection) dsn() string {
 }
 
 func(c *Connection) Connect(ctx context.Context) error {
+	fmt.Println("transporting ...")
 	if err := c.transport.Connect(ctx); err != nil {
 		return err
 	}
 
+	fmt.Println("transporting success\nOpening database")
+	fmt.Println("dsn", c.dsn())
 	db, err := sql.Open(
 		"mysql",
 		c.dsn(),
 	)
 
 	if err != nil {
+		fmt.Println("Failed to open with dsn", c.dsn())
 		return err
 	}
 

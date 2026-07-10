@@ -1,3 +1,4 @@
+
 package postgres
 
 import (
@@ -14,7 +15,7 @@ func NewDriver() *Driver {
 }
 
 func (d *Driver) Name() string {
-	return "mysql"
+	return "pgx"
 }
 
 func (d *Driver) Create(ctx context.Context, config entities.ConnectionConfig, transport transports.Transport) (manager.Connection, error) {

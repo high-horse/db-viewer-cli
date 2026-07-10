@@ -7,6 +7,7 @@ import (
 	"db-viewer/internal/engine/entities"
 	"db-viewer/internal/engine/transports"
 	"fmt"
+	"log"
 )
 
 
@@ -21,6 +22,7 @@ func New() *Factory {
 }
 
 func(f *Factory) Register(driver drivers.Driver) {
+	log.Println("registering:", driver.Name())
 	f.drivers[driver.Name()] = driver
 }
 
@@ -30,6 +32,7 @@ func(f *Factory) Create(
 	transport transports.Transport,
 ) (manager.Connection, error) {
 
+	log.Println("databse type", config.Type)
 	driver, ok := f.drivers[config.Type]
 
 	if !ok {

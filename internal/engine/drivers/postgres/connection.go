@@ -6,9 +6,10 @@ import (
 	"db-viewer/internal/engine/entities"
 	"db-viewer/internal/engine/transports"
 	"fmt"
+	"log"
 
 	// _ "github.com/lib/pq"
-	 _ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 
@@ -57,6 +58,7 @@ func (c *Connection) dsn() string {
 }
 
 func(c *Connection) Connect(ctx context.Context) error {
+	log.Println("conneccting to postgres pgx")
 	if err := c.transport.Connect(ctx); err != nil {
 		return err
 	}
