@@ -2,6 +2,11 @@ package entities
 
 import "time"
 
+
+type DatabaseInfo struct {
+	Name string `json:"name"`
+}
+
 type InspectTableInfo struct {
 	Name        string `json:"name"`
 	Type        string `json:"type"` // TABLE, VIEW
