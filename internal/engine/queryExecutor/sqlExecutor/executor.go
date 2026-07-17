@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	manager "db-viewer/internal/engine/connectionManager"
-	executor "db-viewer/internal/engine/queryExecutor"
+	"db-viewer/internal/engine/entities"
 	"db-viewer/internal/engine/queryExecutor/detector"
 )
 
@@ -24,7 +24,7 @@ func (e *Executor) ExecuteWithDetector(
 	conn manager.Connection,
 	query string,
 	args ...any,
-) (*executor.QueryResult, error) {
+) (*entities.QueryResult, error) {
 	sqlConn, ok := conn.(manager.SQLConnection)
 	if !ok {
 		return nil, fmt.Errorf("connection %q is not a SQL connection", conn.ID())
@@ -43,7 +43,7 @@ func (e *Executor) ExecuteWithDetector(
 		if err != nil {
 			rowsAffected, _ := res.RowsAffected()
 			lastInsertId, _ := res.LastInsertId()
-			return &executor.QueryResult{
+			return &entities.QueryResult{
 				RowsAffected: rowsAffected,
 				LastInsertId: lastInsertId,
 				Duration:     time.Since(start),
@@ -62,7 +62,7 @@ func (e *Executor) Execute(
 	conn manager.Connection,
 	query string,
 	args ...any,
-) (*executor.QueryResult, error) {
+) (*entities.QueryResult, error) {
 	sqlConn, ok := conn.(manager.SQLConnection)
 	if !ok {
 		return nil, fmt.Errorf("connection %q is not a SQL connection", conn.ID())
@@ -88,7 +88,7 @@ func (e *Executor) Execute(
 	// No columns => it wasn't a row-returning statement (INSERT/UPDATE/DDL/etc).
 	// It already ran, exactly once, via QueryContext above.
 	if len(colTypes) == 0 {
-		return &executor.QueryResult{
+		return &entities.QueryResult{
 			Duration: time.Since(start),
 			IsQuery:  false,
 			// RowsAffected intentionally omitted — not obtainable from sql.Rows.
@@ -96,9 +96,14 @@ func (e *Executor) Execute(
 		}, nil
 	}
 
-	columns := make([]executor.ColumnInfo, len(colTypes))
+	columns := make([]entities.ColumnInfo, len(colTypes))
 	for i, ct := range colTypes {
-		columns[i] = executor.ColumnInfo{Name: ct.Name(), DatabaseType: ct.DatabaseTypeName()}
+		nullable, hasNullable := ct.Nullable()
+		columns[i] = entities.ColumnInfo{
+			Name: ct.Name(), 
+			DatabaseType: ct.DatabaseTypeName(),
+			Nullable: nullable && hasNullable,
+		}
 	}
 
 	var result [][]interface{}
@@ -117,7 +122,7 @@ func (e *Executor) Execute(
 		return nil, err
 	}
 
-	return &executor.QueryResult{
+	return &entities.QueryResult{
 		Columns:  columns,
 		Rows:     result,
 		Duration: time.Since(start),
@@ -131,7 +136,7 @@ func (e *Executor) ExecuteOld(
 	conn manager.Connection,
 	query string,
 	args ...any,
-) (*executor.QueryResult, error) {
+) (*entities.QueryResult, error) {
 
 	sqlConn, ok := conn.(manager.SQLConnection)
 	if !ok {
@@ -151,7 +156,7 @@ func (e *Executor) ExecuteOld(
 	return e.runExec(ctx, db, query, start, args...)
 }
 
-func (e *Executor) runQuery(ctx context.Context, db *sql.DB, query string, start time.Time, args ...any) (*executor.QueryResult, error) {
+func (e *Executor) runQuery(ctx context.Context, db *sql.DB, query string, start time.Time, args ...any) (*entities.QueryResult, error) {
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -163,9 +168,9 @@ func (e *Executor) runQuery(ctx context.Context, db *sql.DB, query string, start
 		return nil, err
 	}
 
-	columns := make([]executor.ColumnInfo, len(colTypes))
+	columns := make([]entities.ColumnInfo, len(colTypes))
 	for i, ct := range colTypes {
-		columns[i] = executor.ColumnInfo{
+		columns[i] = entities.ColumnInfo{
 			Name:         ct.Name(),
 			DatabaseType: ct.DatabaseTypeName(),
 		}
@@ -190,7 +195,7 @@ func (e *Executor) runQuery(ctx context.Context, db *sql.DB, query string, start
 		return nil, err
 	}
 
-	return &executor.QueryResult{
+	return &entities.QueryResult{
 		Columns:  columns,
 		Rows:     results,
 		Duration: time.Since(start),
@@ -198,7 +203,7 @@ func (e *Executor) runQuery(ctx context.Context, db *sql.DB, query string, start
 	}, nil
 }
 
-func (e *Executor) runExec(ctx context.Context, db *sql.DB, query string, start time.Time, args ...any) (*executor.QueryResult, error) {
+func (e *Executor) runExec(ctx context.Context, db *sql.DB, query string, start time.Time, args ...any) (*entities.QueryResult, error) {
 	res, err := db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -207,7 +212,7 @@ func (e *Executor) runExec(ctx context.Context, db *sql.DB, query string, start 
 	rowsAffected, _ := res.RowsAffected()
 	lastInsertId, _ := res.LastInsertId()
 
-	return &executor.QueryResult{
+	return &entities.QueryResult{
 		RowsAffected: rowsAffected,
 		LastInsertId: lastInsertId,
 		Duration:     time.Since(start),
