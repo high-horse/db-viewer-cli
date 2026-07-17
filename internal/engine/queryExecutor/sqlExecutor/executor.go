@@ -6,8 +6,7 @@ import (
 	"strings"
 	"time"
 
-	// "database/sql"
-	// "strings"
+
 	"fmt"
 
 	manager "db-viewer/internal/engine/connectionManager"
@@ -52,14 +51,18 @@ func (e *Executor) runQuery(ctx context.Context, db *sql.DB, query string, start
 	}
 
 	columns := make([]executor.ColumnInfo, len(colTypes))
-	for i, ct := range columns {
-		columns[i] = executor.ColumnInfo{Name: ct.Name, DatabaseType: ct.DatabaseType}
+	for i, ct := range colTypes {
+		columns[i] = executor.ColumnInfo{
+			Name: ct.Name(), 
+			DatabaseType: ct.DatabaseTypeName(),
+		}
 	}
 
 	var results [][]interface{}
 	for rows.Next() {
 		values := make([]interface{}, len(colTypes))
 		ptrs := make([]interface{}, len(colTypes))
+
 		for i := range values {
 			ptrs[i] = &values[i]
 		}
@@ -70,7 +73,7 @@ func (e *Executor) runQuery(ctx context.Context, db *sql.DB, query string, start
 		results = append(results, normalizeRow(values))
 	}
 
-	if err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -119,9 +122,45 @@ func isQueryStatement(query string) bool {
 		return false
 	}
 
-	upper := strings.ToUpper(trimmed)
-	for _, prefix := range []string{"SELECT", "SHOW", "EXPLAIN", "WITH", "DESCRIBE", "PRAGMA"} {
-		if strings.HasPrefix(upper, prefix) {
+	for strings.HasPrefix(trimmed, "--") {
+		lines := strings.SplitN(trimmed, "\n", 2)
+		if len(lines) == 1 {
+			return false
+		}
+		trimmed = strings.TrimSpace(lines[1])
+	}
+
+	firstWord := strings.ToUpper(trimmed)
+
+	// Remove SQL comments
+	for strings.HasPrefix(trimmed, "--") {
+		lines := strings.SplitN(trimmed, "\n", 2)
+		if len(lines) == 1 {
+			return false
+		}
+		trimmed = strings.TrimSpace(lines[1])
+	}
+
+	
+	for _, prefix := range []string{
+		"SELECT", 
+		"SHOW", 
+		"EXPLAIN", 
+		"WITH", 
+		"DESCRIBE", 
+		"DESC",
+		"PRAGMA","SELECT",
+		"SHOW",
+		"DESCRIBE",
+		"DESC",
+		"EXPLAIN",
+		"ANALYZE",
+		"WITH",
+		"VALUES",
+		"TABLE",
+		"CALL",
+	} {
+		if strings.HasPrefix(firstWord, prefix) {
 			return true
 		}
 	}

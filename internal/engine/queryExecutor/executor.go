@@ -1,6 +1,5 @@
 package queryexecutor
 
-
 import (
 	"context"
 	manager "db-viewer/internal/engine/connectionManager"
@@ -24,3 +23,4 @@ type QueryResult struct {
 type Executor interface {
 	Execute(ctx context.Context, conn manager.Connection, query string, args ...any) (*QueryResult, error)
 }
+

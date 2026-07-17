@@ -5,6 +5,8 @@ import (
 	"sync"
 	"database/sql"
 
+	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/redis/go-redis/v9"
 )
 
 type Manager interface {
@@ -31,6 +33,20 @@ type SQLConnection interface {
 
 	DB() *sql.DB
 }
+
+type NoSQLConnection interface {
+	Connection
+
+	Client() *mongo.Client
+	Database() *mongo.Database
+}
+
+type RedisConnection interface {
+    Connection
+
+    Client() *redis.Client
+}
+
 
 type ConnectionManager struct {
 	rw sync.RWMutex

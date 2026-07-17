@@ -9,8 +9,11 @@ import (
 	"db-viewer/internal/engine/entities"
 	"db-viewer/internal/engine/factory"
 	"db-viewer/internal/engine/transports"
-	// "fmt"
+	"fmt"
 	"log"
+
+	"db-viewer/internal/engine/queryExecutor/sqlExecutor"
+	executor "db-viewer/internal/engine/queryExecutor"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -56,6 +59,64 @@ func main() {
 	}
 	log.Println("conn status", conn.IsConnected(), conn.Name())
 
+
+	exec, err := Select(conn)
+	if err != nil {
+		log.Fatal("executor selection failed:", err)
+	}
+
+	query := `
+		desc customers;
+	`
+
+	result, err := exec.Execute(
+		context.Background(),
+		conn,
+		query,
+	)
+
+
+	if err != nil {
+		log.Fatal("query execution failed:", err)
+	}
+
+	log.Println("Query executed successfully")
+	log.Println("Duration:", result.Duration)
+	log.Println("Rows affected:", result.RowsAffected)
+	fmt.Println("Columns:")
+	for _, col := range result.Columns {
+		fmt.Println("Name:", col.Name)
+		fmt.Println("Type:", col.DatabaseType)
+	}
+
+	fmt.Println("Rows:")
+	for _, row := range result.Rows {
+		for i, value := range row {
+			fmt.Printf("%s = %v\n", result.Columns[i].Name, value)
+		}
+	}
+
+}
+
+// package queryexecutor
+
+// import (
+// 	"fmt"
+// 	// internal/engine/queryExecutor/sqlExecutor/executor.go
+// 	"db-viewer/internal/engine/queryExecutor/sqlExecutor"
+// 	manager "db-viewer/internal/engine/connectionManager"
+// )
+
+// executor/select.go (or wherever main wires things up)
+func Select(conn manager.Connection) (executor.Executor, error) {
+	switch conn.(type) {
+	case manager.SQLConnection:
+		return sqlExecutor.New(), nil
+	// case manager.NoSQLConnection:
+	// 	return nosqlExecutor.New(), nil
+	default:
+		return nil, fmt.Errorf("no executor available for connection %q", conn.ID())
+	}
 }
 
 
