@@ -19,8 +19,10 @@ type Manager interface {
 
 type Connection interface {
 	ID() string
+	
 	Name() string
 	Type() string
+	DatabaseName() string
 
 	Connect(ctx context.Context) error
 	Disconnect() error
@@ -38,7 +40,7 @@ type NoSQLConnection interface {
 	Connection
 
 	Client() *mongo.Client
-	Database() *mongo.Database
+	DB() *mongo.Database
 }
 
 type RedisConnection interface {

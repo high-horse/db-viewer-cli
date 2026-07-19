@@ -10,10 +10,8 @@ import (
 	"db-viewer/internal/engine/factory"
 	"db-viewer/internal/engine/transports"
 	"fmt"
-	"log"
 
-	"db-viewer/internal/engine/queryExecutor/sqlExecutor"
-	executor "db-viewer/internal/engine/queryExecutor"
+	"log"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -60,90 +58,12 @@ func main() {
 	log.Println("conn status", conn.IsConnected(), conn.Name())
 
 
-	exec, err := Select(conn)
+	driver, err := factory.Driver(conn.Type())
 	if err != nil {
 		log.Fatal("executor selection failed:", err)
 	}
 
-	// query := `
-	// 	-- select count(*) from customers;
-	// 	-- desc customers;
-	// 	SELECT
-	// 		c.customerName,
-	// 		c.country,
-	// 		COUNT(o.orderNumber) AS total_orders,
-	// 		SUM(oD.quantityOrdered * oD.priceEach) AS total_spent
-	// 	FROM customers c
-	// 	JOIN orders o 
-	// 		ON c.customerNumber = o.customerNumber
-	// 	JOIN orderdetails oD
-	// 		ON o.orderNumber = oD.orderNumber
-	// 	GROUP BY
-	// 		c.customerNumber,
-	// 		c.customerName,
-	// 		c.country
-	// 	HAVING total_spent > 10000
-	// 	ORDER BY total_spent DESC
-	// 	LIMIT 10;
-	// `
-	// query := `
-	// 	SELECT
-	// 		p.productName,
-	// 		p.productLine,
-	// 		p.buyPrice,
-	// 		(
-	// 			SELECT AVG(p2.buyPrice)
-	// 			FROM products p2
-	// 			WHERE p2.productLine = p.productLine
-	// 		) AS line_average_price
-	// 	FROM products p
-	// 	WHERE p.buyPrice > (
-	// 		SELECT AVG(buyPrice)
-	// 		FROM products
-	// 	)
-	// 	ORDER BY p.buyPrice DESC;
-	// `
-
-	// query := `
-	// 	WITH customer_orders AS (
-	// 		SELECT
-	// 			customerNumber,
-	// 			COUNT(orderNumber) AS order_count
-	// 		FROM orders
-	// 		GROUP BY customerNumber
-	// 	)
-	// 	SELECT
-	// 		c.customerName,
-	// 		c.country,
-	// 		co.order_count
-	// 	FROM customers c
-	// 	JOIN customer_orders co
-	// 		ON c.customerNumber = co.customerNumber
-	// 	ORDER BY co.order_count DESC;
-	// `
-
-	// query := `
-	// 	SELECT
-	// 		productName,
-	// 		productLine,
-	// 		buyPrice,
-	// 		RANK() OVER (
-	// 			PARTITION BY productLine
-	// 			ORDER BY buyPrice DESC
-	// 		) AS price_rank
-	// 	FROM products;
-	// `
-
-	// query := `
-	// 	SELECT
-	// 		TABLE_NAME,
-	// 		TABLE_ROWS,
-	// 		ENGINE,
-	// 		CREATE_TIME
-	// 	FROM information_schema.tables
-	// 	WHERE TABLE_SCHEMA = DATABASE()
-	// 	ORDER BY TABLE_ROWS DESC;
-	// `
+	exec := driver.Executor()
 
 	query := `
 		SELECT
@@ -170,41 +90,38 @@ func main() {
 	log.Println("Query executed successfully")
 	log.Println("Duration:", result.Duration)
 	log.Println("Rows affected:", result.RowsAffected)
-	fmt.Println("Columns:")
-	for _, col := range result.Columns {
-		fmt.Println("Name:", col.Name)
-		fmt.Println("Type:", col.DatabaseType)
+	// fmt.Println("Columns:")
+	// for _, col := range result.Columns {
+	// 	fmt.Println("Name:", col.Name)
+	// 	fmt.Println("Type:", col.DatabaseType)
+	// }
+
+	// fmt.Println("Rows:")
+	// for _, row := range result.Rows {
+	// 	for i, value := range row {
+	// 		fmt.Printf("%s = %v\n", result.Columns[i].Name, value)
+	// 	}
+	// }
+
+	inspect := driver.Inspector()
+
+	tables, err := inspect.ListTables(context.Background(), conn)
+	if err != nil {
+		fmt.Println("error in insptect tables", err)
 	}
 
-	fmt.Println("Rows:")
-	for _, row := range result.Rows {
-		for i, value := range row {
-			fmt.Printf("%s = %v\n", result.Columns[i].Name, value)
-		}
+	fmt.Println("tables count ", len(tables))
+
+	cols, err := inspect.ListColumns(context.Background(), conn, "customers")
+	if err != nil {
+		fmt.Println("error in inspect columns", err)
 	}
+	fmt.Println("columns count", len(cols))
+	fmt.Println("columns:", cols)
 
 }
 
-// package queryexecutor
 
-// import (
-// 	"fmt"
-// 	// internal/engine/queryExecutor/sqlExecutor/executor.go
-// 	"db-viewer/internal/engine/queryExecutor/sqlExecutor"
-// 	manager "db-viewer/internal/engine/connectionManager"
-// )
-
-// executor/select.go (or wherever main wires things up)
-func Select(conn manager.Connection) (executor.Executor, error) {
-	switch conn.(type) {
-	case manager.SQLConnection:
-		return sqlExecutor.New(), nil
-	// case manager.NoSQLConnection:
-	// 	return nosqlExecutor.New(), nil
-	default:
-		return nil, fmt.Errorf("no executor available for connection %q", conn.ID())
-	}
-}
 
 
 func main_old() {

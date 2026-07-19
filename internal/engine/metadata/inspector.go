@@ -7,7 +7,7 @@ import (
 )
 
 
-type Inspect interface {
+type Inspector interface {
 	ListDatabases(ctx context.Context, conn manager.Connection) ([]entities.DatabaseInfo, error)
 
 	ListTables(ctx context.Context, conn manager.Connection)([]entities.InspectTableInfo, error)
@@ -17,6 +17,6 @@ type Inspect interface {
 	// TODO: for later
 	// ListIndexes()
 	// ListForeignKeys()
-	// ListViews()
+	// ListViews()	
 	// ListProcedures()
 }

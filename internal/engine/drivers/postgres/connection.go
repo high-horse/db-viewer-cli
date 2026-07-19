@@ -39,6 +39,10 @@ func(c *Connection) Name() string {
 	return c.config.Name
 }
 
+func(c *Connection) DatabaseName() string {
+	return c.config.Database
+}
+
 func(c *Connection) Type() string {
 	return "postgres"
 }

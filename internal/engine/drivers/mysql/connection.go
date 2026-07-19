@@ -35,6 +35,10 @@ func(c *Connection) Name() string {
 	return c.config.Name
 }
 
+func(c *Connection) DatabaseName() string {
+	return c.config.Database
+}
+
 func(c *Connection) Type() string {
 	return "mysql"
 }
@@ -45,7 +49,7 @@ func(c *Connection) DB() *sql.DB {
 
 func (c *Connection) dsn() string {
 	return fmt.Sprintf(
-		"%s:%s@tcp(%s)/%s",
+		"%s:%s@tcp(%s)/%s?parseTime=true",
 		c.config.User,
 		c.config.Password,
 		c.transport.Address(),

@@ -1,4 +1,4 @@
-package MySQLInspector
+package mySQLInspector
 
 import (
 	"context"
@@ -58,7 +58,7 @@ func (m *MySQLInspector) ListTables(ctx context.Context, conn manager.Connection
 		ORDER BY TABLE_NAME
 	`
 
-	rows, err := sqlConn.DB().QueryContext(ctx, query, conn.Name)
+	rows, err := sqlConn.DB().QueryContext(ctx, query, conn.DatabaseName())
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,6 @@ func (m *MySQLInspector) ListTables(ctx context.Context, conn manager.Connection
 func (i *MySQLInspector) ListColumns(
 	ctx context.Context,
 	conn manager.Connection,
-	database string,
 	table string,
 ) ([]entities.InspectColumnInfo, error) {
 
@@ -139,6 +138,7 @@ func (i *MySQLInspector) ListColumns(
 		return nil, fmt.Errorf("connection is not SQL")
 	}
 
+	database := sqlConn.DatabaseName()
 	query := `
 		SELECT
 			COLUMN_NAME,

@@ -1,10 +1,11 @@
-
 package postgres
 
 import (
 	"context"
 	manager "db-viewer/internal/engine/connectionManager"
 	"db-viewer/internal/engine/entities"
+	"db-viewer/internal/engine/metadata"
+	queryexecutor "db-viewer/internal/engine/queryExecutor"
 	"db-viewer/internal/engine/transports"
 )
 
@@ -23,3 +24,13 @@ func (d *Driver) Create(ctx context.Context, config entities.ConnectionConfig, t
 	conn := New(config, transport)
 	return conn, nil
 }
+
+func (d *Driver) Executor() queryexecutor.Executor {
+	return nil
+}
+
+func (d *Driver) Inspector() metadata.Inspector {
+	return nil
+}
+
+

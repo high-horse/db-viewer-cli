@@ -4,7 +4,7 @@ import (
 	"context"
 	manager "db-viewer/internal/engine/connectionManager"
 	"db-viewer/internal/engine/drivers"
-	"db-viewer/internal/engine/entities"
+	"db-viewer/internal/engine/entities"	
 	"db-viewer/internal/engine/transports"
 	"fmt"
 	"log"
@@ -40,4 +40,14 @@ func(f *Factory) Create(
 	}
 
 	return driver.Create(ctx, config, transport)
+}
+
+
+func(f *Factory) Driver(name string) (drivers.Driver, error) {
+	driver, ok := f.drivers[name]
+	if !ok {
+		return nil, fmt.Errorf("driver %q not registered", name)
+	}
+
+	return driver, nil
 }
